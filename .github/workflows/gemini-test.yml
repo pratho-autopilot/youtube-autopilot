@@ -1,0 +1,37 @@
+name: Gemini API Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-gemini:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Test Gemini API connection
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "Gemini API key is missing!"
+            exit 1
+          fi
+
+          curl --fail-with-body --silent --show-error \
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent" \
+            -H "Content-Type: application/json" \
+            -H "x-goog-api-key: $GEMINI_API_KEY" \
+            -d '{
+              "contents": [{
+                "parts": [{
+                  "text": "Reply with exactly: Gemini connection successful."
+                }]
+              }]
+            }' \
+            -o response.json
+
+          python -c 'import json; d=json.load(open("response.json")); print(d["candidates"][0]["content"]["parts"][0]["text"])'
+          
